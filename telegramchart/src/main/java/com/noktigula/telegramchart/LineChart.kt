@@ -18,28 +18,45 @@ class LineChart {
     }
 
     fun validate(builder:ChartBuilder) {
-        if (builder.xAxis == LineChartAxis.EMPTY || builder.yAxis == LineChartAxis.EMPTY || builder.entries.isEmpty()) {
+        if (builder.xAxis == XAxis.EMPTY || /*builder.yAxis == YAxis.EMPTY ||*/ builder.entries.isEmpty()) {
             throw RuntimeException("Not enough data")
         }
     }
 }
 
 class ChartBuilder(
-    var xAxis: LineChartAxis = LineChartAxis.EMPTY,
-    var yAxis: LineChartAxis = LineChartAxis.EMPTY,
+    var xAxis: XAxis = XAxis.EMPTY,
+    var yAxis: YAxis = YAxis.EMPTY,
     var entries: Array<LineChartEntry> = arrayOf()
 )
 
 data class LineChartState(
-    val xAxis: LineChartAxis,
-    val yAxis: LineChartAxis,
+    val xAxis: XAxis,
+    val yAxis: YAxis,
     val entries: Array<LineChartEntry>
-)
-
-data class LineChartAxis(val title: String, val values: IntArray) {
-    companion object {
-        val EMPTY = LineChartAxis("", intArrayOf())
+) {
+    fun maxY():Long {
+        var max = Long.MIN_VALUE
+        entries.forEach { entry ->
+            entry.data.forEach {y ->
+                if (y > max) {
+                    max = y
+                }
+            }
+        }
+        return max
     }
 }
-data class LineChartEntry(val title: String, val color: Int, val data: Array<Point>)
-data class Point(val x: Int, val y: Int)
+
+data class XAxis(val title: String, val values: LongArray) {
+    companion object {
+        val EMPTY = XAxis("", longArrayOf())
+    }
+}
+
+data class YAxis(val title: String, val values: IntArray) {
+    companion object {
+        val EMPTY = YAxis("", intArrayOf())
+    }
+}
+data class LineChartEntry(val title: String, val color: Int, val data: LongArray)
