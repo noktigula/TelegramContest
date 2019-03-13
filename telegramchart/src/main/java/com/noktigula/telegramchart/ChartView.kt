@@ -27,8 +27,10 @@ class ChartView @JvmOverloads constructor(context: Context, attrSet: AttributeSe
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas!!)
-        canvas.drawLine(0f, height.toFloat(), width.toFloat(), height.toFloat(), axisPaint)
-        canvas.drawText("0", 0f, height.toFloat(), axisTextPaint)
+        val w = width.toFloat()
+        val h = height.toFloat()
+        canvas.drawLine(0f, h-1, w, h-1, axisPaint)
+        canvas.drawText("0", 0f, h, axisTextPaint)
 
         for (i in viewState.yPos.indices) {
             canvas.drawLine(0f, viewState.yPos[i], width.toFloat(), viewState.yPos[i], axisPaint)
