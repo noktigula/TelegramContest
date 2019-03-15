@@ -19,8 +19,10 @@ class ChartView @JvmOverloads constructor(context: Context, attrSet: AttributeSe
 
     private lateinit var viewState:ViewState
 
+    //TODO move paints to state
     val axisPaint = Paint()
     val axisTextPaint = Paint()
+    val linePaints = ArrayList<Paint>()
     init {
         axisPaint.color = Color.GRAY
         axisPaint.strokeWidth = 1f
@@ -37,12 +39,26 @@ class ChartView @JvmOverloads constructor(context: Context, attrSet: AttributeSe
         drawDates(canvas, viewState)
 
         //TODO add margin to text
-        canvas.drawLine(0f, h-viewState.dateYOffset, w, h-viewState.dateYOffset, axisPaint)
-        canvas.drawText("0", 0f, h-viewState.dateYOffset, axisTextPaint)
+        val drawableArea = h-viewState.dateYOffset
+        canvas.drawLine(0f, drawableArea, w, drawableArea, axisPaint)
+        canvas.drawText("0", 0f, drawableArea, axisTextPaint)
 
         for (i in viewState.yPos.indices) {
             canvas.drawLine(0f, viewState.yPos[i], width.toFloat(), viewState.yPos[i], axisPaint)
             canvas.drawText(viewState.yTitles[i], 0f, viewState.yPos[i], axisTextPaint)
+        }
+
+        //TODO current assumption that each point index corresponds to date index
+        for (i in viewState.lines.indices) {
+            val line = viewState.lines[i]
+            for (j in 1 until viewState.chartWindow.size()-1) {
+                //FIXME there is inconsistency between window size and actually displayable dates
+                val yStart = drawableArea - line.data[j-1] * viewState.yStep
+                val yEnd = drawableArea - line.data[j] * viewState.yStep
+                if (j < viewState.datePos.size) {
+                    canvas.drawLine(viewState.datePos[j-1], yStart, viewState.datePos[j], yEnd, linePaints[i])
+                }
+            }
         }
     }
 
@@ -98,6 +114,8 @@ class ChartView @JvmOverloads constructor(context: Context, attrSet: AttributeSe
             yTitles[i-1] = "${start * i}"
         }
 
+        updateLinePaints(linePaints, state.entries)
+
         return ViewState(
                 yPos = ys,
                 yTitles = yTitles,
@@ -105,7 +123,18 @@ class ChartView @JvmOverloads constructor(context: Context, attrSet: AttributeSe
                 dateTitles = dateTitles,
                 dateYOffset = textOffset,
                 chartWindow = currentWindow,
-                yStep = adjustedHeight / maxY)
+                yStep = adjustedHeight / maxY,
+                lines = state.entries)
+    }
+
+    private fun updateLinePaints(receiver:MutableList<Paint>, source:Array<LineChartEntry>) {
+        receiver.clear()
+        receiver.addAll(source.map {
+            val paint = Paint()
+            paint.strokeWidth = 5f
+            paint.color = Color.rgb(it.color and 0xff0000, it.color and 0x00ff00, it.color and 0x0000ff)
+            paint
+        })
     }
 
     private fun roundToHundred(x:Long) = ((x+99) / 100) * 100
@@ -152,8 +181,11 @@ class ChartView @JvmOverloads constructor(context: Context, attrSet: AttributeSe
             val dateTitles:Array<String>,
             val dateYOffset: Float,
             val chartWindow: ChartWindow,
-            val yStep:Float
+            val yStep:Float,
+            val lines:Array<LineChartEntry>
     )
 
-    data class ChartWindow(val startDate:Long, val endDate:Long, val startIndex:Int, val endIndex:Int)
+    data class ChartWindow(val startDate:Long, val endDate:Long, val startIndex:Int, val endIndex:Int) {
+        fun size() = endIndex - startIndex
+    }
 }
