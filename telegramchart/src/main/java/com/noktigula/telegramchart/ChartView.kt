@@ -121,8 +121,9 @@ class ChartView @JvmOverloads constructor(context: Context, attrSet: AttributeSe
     fun datesPositions(window:ChartWindow) : FloatArray {
         val step = (width / VISIBLE_DATES).toFloat()
         val xPos = FloatArray(VISIBLE_DATES)
-        for(i in 1 .. VISIBLE_DATES) {
-            xPos[i-1] = step * i
+        xPos[0] = 0f
+        for(i in 1 until VISIBLE_DATES) {
+            xPos[i] = step * i
         }
         return xPos
     }
