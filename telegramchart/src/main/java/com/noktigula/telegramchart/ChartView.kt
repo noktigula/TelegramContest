@@ -34,11 +34,11 @@ class ChartView @JvmOverloads constructor(context: Context, attrSet: AttributeSe
         val w = width.toFloat()
         val h = height.toFloat()
 
-        val datesHeight = drawDates(canvas, viewState)
+        drawDates(canvas, viewState)
 
         //TODO add margin to text
-        canvas.drawLine(0f, h-datesHeight, w, h-datesHeight, axisPaint)
-        canvas.drawText("0", 0f, h, axisTextPaint)
+        canvas.drawLine(0f, h-viewState.dateYOffset, w, h-viewState.dateYOffset, axisPaint)
+        canvas.drawText("0", 0f, h-viewState.dateYOffset, axisTextPaint)
 
         for (i in viewState.yPos.indices) {
             canvas.drawLine(0f, viewState.yPos[i], width.toFloat(), viewState.yPos[i], axisPaint)
@@ -47,12 +47,17 @@ class ChartView @JvmOverloads constructor(context: Context, attrSet: AttributeSe
     }
 
     //@returns max height of text
-    private fun drawDates(canvas: Canvas, state:ViewState) : Float {
+    private fun drawDates(canvas: Canvas, state:ViewState)  {
+        for(i in viewState.datePos.indices) {
+            canvas.drawText(viewState.dateTitles[i], viewState.datePos[i], height.toFloat() - 1, axisTextPaint)
+        }
+    }
+
+    private fun measureDatesOffset(dates:Array<String>) : Float {
         var max = 0f
         val rect = Rect()
-        for(i in viewState.datePos.indices) {
-            canvas.drawText(viewState.dateTitles[i], viewState.datePos[i], height.toFloat()-1, axisTextPaint)
-            axisTextPaint.getTextBounds(viewState.dateTitles[i], 0, viewState.dateTitles[i].length, rect)
+        for(i in dates.indices) {
+            axisTextPaint.getTextBounds(dates[i], 0, dates[i].length, rect)
             if (rect.height() > max) {
                 max = rect.height().toFloat()
             }
@@ -74,22 +79,32 @@ class ChartView @JvmOverloads constructor(context: Context, attrSet: AttributeSe
     }
 
     private fun stateFromChartState(state: LineChartState) : ViewState {
+        //TODO accept window together with chart
+        val currentWindow = windowByIndices(state,0, 10)
+        val windowDates = datesPositions(currentWindow)
+        val dateTitles = readableDates(currentWindow)
+
         //FIXME FIRST need to include text offset, so it needs to be ready at this point
         val maxY = roundToHundred(state.maxY())
         val lines = BUCKETS - 1
         val start = maxY / BUCKETS
         val ys = FloatArray(lines)
         val yTitles = Array(lines) { "" }
+        val textOffset = measureDatesOffset(dateTitles)
+        val adjustedHeight = height - textOffset
         for (i in 1 ..lines) {
-            val yPos = (height - (height / BUCKETS * i)).toFloat() // TODO minus half text height
+            val yPos = (adjustedHeight - (adjustedHeight / BUCKETS * i)).toFloat() // TODO minus half text height
             ys[i-1] = yPos
             yTitles[i-1] = "${start * i}"
         }
-        //TODO accept window together with chart
-        val currentWindow = windowByIndices(state,0, 10)
-        val windowDates = datesPositions(currentWindow)
-        val dateTitles = readableDates(currentWindow)
-        return ViewState(ys, yTitles, windowDates, dateTitles, currentWindow)
+
+        return ViewState(
+                yPos = ys,
+                yTitles = yTitles,
+                datePos = windowDates,
+                dateTitles = dateTitles,
+                dateYOffset = textOffset,
+                chartWindow = currentWindow)
     }
 
     private fun roundToHundred(x:Long) = ((x+99) / 100) * 100
@@ -131,11 +146,14 @@ class ChartView @JvmOverloads constructor(context: Context, attrSet: AttributeSe
         return readableDates
     }
 
+    //TODO need to introduce kind of margin between items
+    //TODO need to keep mapping between pixels / height / value on graph to be able to position dots properly
     internal data class ViewState(
             val yPos:FloatArray,
             val yTitles:Array<String>,
             val datePos:FloatArray,
             val dateTitles:Array<String>,
+            val dateYOffset: Float,
             val chartWindow: ChartWindow
     )
 
