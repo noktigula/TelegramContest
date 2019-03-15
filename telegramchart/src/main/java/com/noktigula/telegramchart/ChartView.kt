@@ -104,7 +104,8 @@ class ChartView @JvmOverloads constructor(context: Context, attrSet: AttributeSe
                 datePos = windowDates,
                 dateTitles = dateTitles,
                 dateYOffset = textOffset,
-                chartWindow = currentWindow)
+                chartWindow = currentWindow,
+                yStep = adjustedHeight / maxY)
     }
 
     private fun roundToHundred(x:Long) = ((x+99) / 100) * 100
@@ -150,7 +151,8 @@ class ChartView @JvmOverloads constructor(context: Context, attrSet: AttributeSe
             val datePos:FloatArray,
             val dateTitles:Array<String>,
             val dateYOffset: Float,
-            val chartWindow: ChartWindow
+            val chartWindow: ChartWindow,
+            val yStep:Float
     )
 
     data class ChartWindow(val startDate:Long, val endDate:Long, val startIndex:Int, val endIndex:Int)
