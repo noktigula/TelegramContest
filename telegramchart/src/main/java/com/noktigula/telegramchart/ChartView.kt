@@ -128,18 +128,13 @@ class ChartView @JvmOverloads constructor(context: Context, attrSet: AttributeSe
     }
 
     fun readableDates(window:ChartWindow) : Array<String> {
-        val roundedStart = window.startDate % DAY_MILLIS
-        val roundedEnd = window.startDate % DAY_MILLIS
-        var deltaDays = 0
-        while((roundedStart+deltaDays) < roundedEnd) {
-            deltaDays++
-        }
+        var deltaDays = (window.endDate - window.startDate) / DAY_MILLIS
 
         var readableDates = Array(VISIBLE_DATES){ ""}
         val step = deltaDays / VISIBLE_DATES
         val formatter = SimpleDateFormat("dd MMM", Locale.getDefault())
         for (i in 1 .. VISIBLE_DATES) {
-            val nextDate = roundedStart + (step * i * DAY_MILLIS)
+            val nextDate = window.startDate + (step * i * DAY_MILLIS)
             val date = Date(nextDate)
             readableDates[i-1] = formatter.format(date)
         }
