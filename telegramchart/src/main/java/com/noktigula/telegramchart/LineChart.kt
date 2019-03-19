@@ -65,22 +65,17 @@ class LineChart(val textSize:Float, val state:LineChartState) {
                 lines = state.entries)
     }
 
-    private fun measureDatesOffset(dates:Array<String>) : Float {
+    fun drawDates(canvas: Canvas, viewState:ViewState) : Float {
         var max = 0f
         val rect = Rect()
-        for(i in dates.indices) {
-            axisTextPaint.getTextBounds(dates[i], 0, dates[i].length, rect)
+        for(i in viewState.datePos.indices) {
+            canvas.drawText(viewState.dateTitles[i], viewState.datePos[i], canvas.height.toFloat() - 1, axisTextPaint)
+            axisTextPaint.getTextBounds(viewState.dateTitles[i], 0, viewState.dateTitles[i].length, rect)
             if (rect.height() > max) {
                 max = rect.height().toFloat()
             }
         }
         return max
-    }
-
-    private fun drawDates(canvas: Canvas, viewState:ViewState)  {
-        for(i in viewState.datePos.indices) {
-            canvas.drawText(viewState.dateTitles[i], viewState.datePos[i], canvas.height.toFloat() - 1, axisTextPaint)
-        }
     }
 
     private fun updateLinePaints(receiver:MutableList<Paint>, source:Array<LineChartEntry>) {
@@ -129,21 +124,16 @@ class LineChart(val textSize:Float, val state:LineChartState) {
     }
 
     private fun drawInternal(canvas: Canvas, viewState: ViewState) {
-        val w = canvas.width.toFloat()
-        val h = canvas.height.toFloat()
+        val dateTextOffset = drawDates(canvas, viewState)
+        val drawableArea = canvas.height - dateTextOffset
 
-        drawDates(canvas, viewState)
+        drawYLines(canvas, drawableArea, viewState.yPos, viewState.yTitles)
+        drawChartLines()
 
-        //TODO add margin to text
-        val drawableArea = h-viewState.dateYOffset
-        canvas.drawLine(0f, drawableArea, w, drawableArea, axisPaint)
-        canvas.drawText("0", 0f, drawableArea, axisTextPaint)
 
-        for (i in viewState.yPos.indices) {
-            canvas.drawLine(0f, viewState.yPos[i], canvas.width.toFloat(), viewState.yPos[i], axisPaint)
-            canvas.drawText(viewState.yTitles[i], 0f, viewState.yPos[i], axisTextPaint)
-        }
+    }
 
+    fun drawChartLines(canvas:Canvas) {
         //TODO current assumption that each point index corresponds to date index
         for (i in viewState.lines.indices) {
             val line = viewState.lines[i]
@@ -155,6 +145,25 @@ class LineChart(val textSize:Float, val state:LineChartState) {
                     canvas.drawLine(viewState.datePos[j-1], yStart, viewState.datePos[j], yEnd, linePaints[i])
                 }
             }
+        }
+    }
+
+
+    //FIXME FIRST need to find a way to allow change method calls without changing the results and without side effects
+    private fun draw(canvas: Canvas) {
+        drawInternal(canvas)
+    }
+
+    private fun drawYLinesInternal(canvas: Canvas, drawableArea:Float, yLines:FloatArray, yTitles: Array<String>) {
+        val w = canvas.width.toFloat()
+        val h = canvas.height.toFloat()
+
+        canvas.drawLine(0f, drawableArea, w, drawableArea, axisPaint)
+        canvas.drawText("0", 0f, drawableArea, axisTextPaint)
+
+        for (i in yLines.indices) {
+            canvas.drawLine(0f, yLines[i], canvas.width.toFloat(), yLines[i], axisPaint)
+            canvas.drawText(yTitles[i], 0f, yLines[i], axisTextPaint)
         }
     }
 
